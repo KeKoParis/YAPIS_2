@@ -1,3 +1,4 @@
+import re
 import ply.lex as lex
 
 # List of token names. This is always required
@@ -21,6 +22,9 @@ a_tokens = [
     "ID",
     "INDENT",
     "DEDENT",
+    "COMMENT",
+    "STRING",
+    "METHOD",
 ]
 
 reserved = {
@@ -29,6 +33,7 @@ reserved = {
     "do": "DO",
     "if": "IF",
     "then": "THEN",
+    "else": "ELSE",
     "while": "WHILE",
     "return": "RETURN",
     "matrix": "MATRIX",
@@ -38,13 +43,15 @@ reserved = {
     "for": "FOR",
     "read": "READ",
     "write": "WRITE",
+    "const": "CONST",
+    "in": "IN",
 }
 
 
 class My_Lexer(object):
     tokens = a_tokens + list(reserved.values())
 
-    states = (("indentation", "exclusive"),)  # Exclusive 'indentation' state
+    states = (("indentation", "inclusive"),)  # Exclusive 'indentation' state
 
     def __init__(self):
         self.indent_stack = [0]  # Track indentation levels with a stack
@@ -70,8 +77,17 @@ class My_Lexer(object):
         t.type = reserved.get(t.value, "ID")
         return t
 
+    def t_METHOD(self, t):
+        r"\.[a-zA-Z_][a-zA-Z_0-9]*"
+        return t
+
+    def t_STRING(self, t):
+        r"\"(.)*\" "
+        t.value = t.value[1:-1]
+        return t
+
     def t_COMMENT(self, t):
-        r"\#.*"
+        r"\#(.)*"
         pass
 
     def t_FLOAT(self, t):
@@ -84,16 +100,27 @@ class My_Lexer(object):
         t.value = int(t.value)
         return t
 
+        # Handle indentation (in 'indentation' state)
+
     def t_newline(self, t):
         r"\n+"
         t.lexer.lineno += len(t.value)
         t.lexer.begin("indentation")  # Switch to indentation state
 
-    # Handle indentation (in 'indentation' state)
-    def t_indentation_indentation(self, t):
-        r"[ \t]+"  # Match one or more spaces or tabs
-        current_indent = len(t.value)
+    t_indentation_ignore = " "
 
+    def t_indentation_count(self, t):
+        r"end"
+        self.indent_stack = [0]
+
+        t.type = "DEDENT"
+        return t
+
+    def t_indentation_indentation(self, t):
+        r"\t{1,8}"  # Match one or more spaces or tabs
+        curr_val = t.value
+        current_indent = len(curr_val) # Count spaces or tabs at the start of the line
+        # print(f"indends: {current_indent}  {self.indent_stack[-1]}")
         # Compare the current indentation with the top of the indent stack
         if current_indent > self.indent_stack[-1]:
             self.indent_stack.append(current_indent)
@@ -109,11 +136,11 @@ class My_Lexer(object):
             return t
 
         # If we reach here, we have a case of the same level of indentation
-        # Return to the initial state after processing indentation
         t.lexer.begin("INITIAL")
 
     # Ignore all characters in the indentation state
     def t_indentation_error(self, t):
+        print(f"Illegal character '{t.value[0]}'")
         t.lexer.skip(1)  # Skip illegal character without printing
 
     # Ignore spaces and tabs in other parts of the code
@@ -134,15 +161,3 @@ class My_Lexer(object):
             if not tok:
                 break  # No more input
             print(tok)  # Print the token
-
-
-# Test input data
-data = """
-a = [0, 2.2]
-    b = vector
-p = q
-"""
-
-my_lexer = My_Lexer()
-my_lexer.build()
-my_lexer.input(data)

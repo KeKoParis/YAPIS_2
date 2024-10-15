@@ -22,14 +22,13 @@ a_tokens = [
     "ID",
     "INDENT",
     "DEDENT",
-    "COMMENT",
     "STRING",
     "METHOD",
 ]
 
 reserved = {
     "func": "FUNC",
-    "proc": "PROC",
+    "global": "GLOBAL",
     "do": "DO",
     "if": "IF",
     "then": "THEN",
@@ -119,7 +118,7 @@ class My_Lexer(object):
     def t_indentation_indentation(self, t):
         r"\t{1,8}"  # Match one or more spaces or tabs
         curr_val = t.value
-        current_indent = len(curr_val) # Count spaces or tabs at the start of the line
+        current_indent = len(curr_val)  # Count spaces or tabs at the start of the line
         # print(f"indends: {current_indent}  {self.indent_stack[-1]}")
         # Compare the current indentation with the top of the indent stack
         if current_indent > self.indent_stack[-1]:

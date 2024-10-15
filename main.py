@@ -13,7 +13,7 @@ func multiplexMatrix(matrix a, matrix b) do
 func main() do
 	const t = a * b
     a = [1, 2, 3, 4]
-	b = (matrix) a
+	b = matrix a
 	c = [[1, 2, 3] [4, 5, 6]]
 	d = (vector) b
 

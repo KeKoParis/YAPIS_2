@@ -1,0 +1,30 @@
+func main()
+	d = [[1, 2] [3, 4]]
+ 	e = [[3,4][5, 6]]
+	
+	f = d + e 
+	write(f)
+
+	f = d - e
+	write(f)
+
+	n = [2.5]
+	f = d * n
+	write(f)
+
+	i = [0]
+	p = d[i] 
+	write(f)
+
+	d[i] * [5]
+	write(d)
+
+	t = |m|
+	write(t)
+	
+	t = [4, 1.1]
+	q = d * t
+	write(q)
+
+	return [0]
+    end

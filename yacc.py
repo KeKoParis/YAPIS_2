@@ -1,10 +1,175 @@
 import ply.yacc as yacc
-from main import data
+import ply.lex as lex
 
-# Get the token map from the lexer.  This is required.
-from lex import My_Lexer
 
-tokens = My_Lexer().tokens
+a_tokens = [
+    "FLOAT",
+    "NUMBER",
+    "PLUS",
+    "MINUS",
+    "TIMES",
+    "DIVIDE",
+    "LPAREN",
+    "RPAREN",
+    "LSQPAREN",
+    "RSQPAREN",
+    "VERTICALBAR",
+    "COMMA",
+    "EQ",
+    "EQEQ",
+    "MORE",
+    "LESS",
+    "ID",
+    "INDENT",
+    "DEDENT",
+    "STRING",
+    "METHOD",
+]
+
+reserved = {
+    "func": "FUNC",
+    "global": "GLOBAL",
+    "do": "DO",
+    "if": "IF",
+    "then": "THEN",
+    "else": "ELSE",
+    "while": "WHILE",
+    "return": "RETURN",
+    "matrix": "MATRIX",
+    "vector": "VECTOR",
+    "call": "CALL",
+    "until": "UNTIL",
+    "for": "FOR",
+    "read": "READ",
+    "write": "WRITE",
+    "const": "CONST",
+    "in": "IN",
+}
+
+
+tokens = a_tokens + list(reserved.values())
+
+states = (("indentation", "inclusive"),)  # Exclusive 'indentation' state
+
+indent_stack = [0]  # Track indentation levels with a stack
+
+# Regular expression rules for simple tokens
+t_PLUS = r"\+"
+t_MINUS = r"-"
+t_TIMES = r"\*"
+t_DIVIDE = r"/"
+t_LPAREN = r"\("
+t_RPAREN = r"\)"
+t_LSQPAREN = r"\["
+t_RSQPAREN = r"\]"
+t_VERTICALBAR = r"\|"
+t_COMMA = r","
+t_EQ = r"="
+t_EQEQ = r"=="
+t_MORE = r">"
+t_LESS = r"<"
+
+
+def t_ID(t):
+    r"[a-zA-Z_][a-zA-Z_0-9]*"
+    t.type = reserved.get(t.value, "ID")
+    return t
+
+
+def t_METHOD(t):
+    r"\.[a-zA-Z_][a-zA-Z_0-9]*"
+    return t
+
+
+def t_STRING(t):
+    r"\"(.)*\" "
+    t.value = t.value[1:-1]
+    return t
+
+
+def t_COMMENT(t):
+    r"\#(.)*"
+    pass
+
+
+def t_FLOAT(t):
+    r"\d+\.\d+"
+    t.value = float(t.value)
+    return t
+
+
+def t_NUMBER(t):
+    r"\d+"
+    t.value = int(t.value)
+    return t
+
+    # Handle indentation (in 'indentation' state)
+
+
+def t_newline(t):
+    r"\n+"
+    t.lexer.lineno += len(t.value)
+    t.lexer.begin("indentation")  # Switch to indentation state
+
+
+t_indentation_ignore = " "
+
+
+def t_indentation_count(t):
+    r"end"
+    global indent_stack
+    indent_stack = [0]
+
+    t.type = "DEDENT"
+    return t
+
+
+def t_indentation_indentation(t):
+    r"\t{1,8}"  # Match one or more spaces or tabs
+    global indent_stack
+
+    curr_val = t.value
+    current_indent = len(curr_val)  # Count spaces or tabs at the start of the line
+    # print(f"indends: {current_indent}  {indent_stack[-1]}")
+    # Compare the current indentation with the top of the indent stack
+    if current_indent > indent_stack[-1]:
+        indent_stack.append(current_indent)
+        t.type = "INDENT"
+        return t
+    elif current_indent < indent_stack[-1]:
+        dedent_count = 0
+        while indent_stack and current_indent < indent_stack[-1]:
+            indent_stack.pop()
+            dedent_count += 1
+        t.type = "DEDENT"
+        t.value = dedent_count
+        return t
+
+    # If we reach here, we have a case of the same level of indentation
+    t.lexer.begin("INITIAL")
+
+
+# Ignore all characters in the indentation state
+def t_indentation_error(t):
+    print(f"Illegal character '{t.value[0]}'")
+    t.lexer.skip(1)  # Skip illegal character without printing
+
+
+# Ignore spaces and tabs in other parts of the code
+t_ignore = " \t"
+
+
+# Error handling rule
+def t_error(t):
+    print(f"Illegal character '{t.value[0]}'")
+    t.lexer.skip(1)
+
+
+#
+# PARESER
+#
+
+tree = []
 
 precedence = (
     ("left", "PLUS", "MINUS"),
@@ -26,10 +191,12 @@ def p_prog_element_list(p):
     else:
         p[0] = [p[1]]
 
+
 def p_prog_element(p):
     """prog_element : function
     | global_var"""
     p[0] = p[1]
+
 
 def p_function(p):
     """function : FUNC ID LPAREN argument_list RPAREN DO block"""
@@ -284,12 +451,25 @@ def p_error(p):
 # Build the parser
 parser = yacc.yacc()
 
-while True:
-    try:
-        s = input(data)
-    except EOFError:
-        break
-    if not s:
-        continue
-    result = parser.parse(s)
-    print(result)
+
+with open("data_1.txt", "r") as f:
+    data = f.read()
+
+    lexer = lex.lex()
+
+    lexer.input(data)
+    while True:
+        tok = lexer.token()
+        if not tok:
+            break
+        print(tok)
+
+    while True:
+        try:
+            s = input(data)
+        except EOFError:
+            break
+        if not s:
+            continue
+        result = parser.parse(s)
+        print("Hello")

@@ -1,0 +1,30 @@
+o = [9]
+func main()
+	a = [1, 2, 4]
+	b = [4, 5, 6]
+	
+	write( a[0] > b[2] )
+	write( a[2] >= b[0] )
+	write( a[0] < b[2] )
+	write( a[0] == b[2] )
+	write( a[2] == b[0] )
+
+	c = a + b
+	write( c )
+	
+	c = a - b
+	write( c )
+
+	c = a * [5]
+	write( c )
+
+	c = a * b
+	write( c )
+	global o
+	c = |v|
+	write( c )
+	write(|(([5]+c).add(8)).add(9) + a|)
+	write(o)
+
+	return [0]
+    end

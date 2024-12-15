@@ -1,0 +1,2 @@
+func main(vector a) do
+    call myProcedure( matrix a )

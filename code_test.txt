@@ -1,0 +1,15 @@
+func multiplexMatrix(matrix a, matrix b) do
+    write(a)
+    return a * b
+
+func main() do
+    const t 
+    a = [4]
+    b = matrix a
+    d = [5]
+    t = a * b
+    a = [1, 2, 3, 4]
+
+    multiplexMatrix(b * d)
+
+    return [0]

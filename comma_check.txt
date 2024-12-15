@@ -1,0 +1,4 @@
+func main() do
+    a = b
+    return [0]
+    end
